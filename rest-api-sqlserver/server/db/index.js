@@ -1,23 +1,23 @@
 const sql = require("mssql");
 const config = require("../config");
 
-sql.connect(config).then(pool => {
-    // Query
-    console.log(pool);
-    return pool.request()
-    .query('select * from HumanResources.Department')
-}).then(result => {
-    console.dir(result)
-}).catch(err => {
-    // ... error checks
-    console.log("error:", err);
-})
+const executeSql = async function(sqlQuery) {
+  const pool = new sql.ConnectionPool(config);
+  pool.on('error', err => {
+    console.log('sql pool error db.js', err);
+  });
 
-sql.on("error", err => {
-  // ... error handler
-  console.log("error handler:", err);
-});
+
+  try {
+    await pool.connect();
+    return await pool.request().query(sqlQuery);
+  } catch (err) {
+    return JSON.stringify(err, ["message", "arguments", "type", "name"]);
+  } finally {
+    pool.close();
+  }
+}
 
 module.exports = {
-  sql
-};
+  executeSql
+}
